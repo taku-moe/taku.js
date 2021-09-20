@@ -13,12 +13,12 @@ Taku Bot API is the Official API for creating Taku.moe bots.
 
 ## Installation
 
-`npm install taku-api`
+`npm install taku-js`
 
 Example Bot:
 
 ```ts
-import Taku from 'taku-api';
+import Taku from 'taku-js';
 const Taku = new TAKU(process.env.BOT_TOKEN, true, "!");
 
 Taku.on("message", async (message: IMessage) => {
@@ -33,7 +33,7 @@ Taku.on("command", async (command: IParsedMessage) => {
 Example Whois Command:
 
 ```ts
-import Taku from 'taku-api';
+import Taku from 'taku-js';
 const Taku = new TAKU(process.env.BOT_TOKEN, true, "!");
 
 Taku.on("command", async (command: IParsedMessage) => {
