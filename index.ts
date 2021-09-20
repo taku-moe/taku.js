@@ -3,6 +3,7 @@ require("dotenv").config();
 
 import chalk from "chalk";
 import io, { Socket } from "socket.io-client";
+// @ts-ignore
 import * as fetch from "node-fetch";
 import EventEmitter from "eventemitter3";
 export const PORT = process.env.PORT || 8081;

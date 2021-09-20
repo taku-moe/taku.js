@@ -1,11 +1,12 @@
 {
   "name": "taku.js",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Taku Bot API",
   "main": "index.ts",
   "scripts": {
     "dev": "nodemon ./index.ts",
-    "prettify": "npx prettier --write \"./**/*.ts\" && npx prettier --write \"./**/*.json\""
+    "prettify": "npx prettier --write \"./**/*.ts\" && npx prettier --write \"./**/*.json\"",
+    "build": "tsc"
   },
   "keywords": [
     "bot-api"
