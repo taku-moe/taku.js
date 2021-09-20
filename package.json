@@ -1,6 +1,6 @@
 {
-  "name": "taku-js",
-  "version": "1.0.8",
+  "name": "taku.js",
+  "version": "1.0.0",
   "description": "Taku Bot API",
   "main": "index.ts",
   "scripts": {
