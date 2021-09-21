@@ -19,10 +19,13 @@ export interface ICommand {
   args: Array<string>;
 }
 
-export interface User {
+interface CacheItem {
+  _id: string
+}
+
+export interface IUser extends CacheItem {
   email: string;
   password: string;
-  _id: string;
   created_at: number;
   username: string;
   profileImage?: string;
@@ -66,11 +69,59 @@ class Logger {
   }
 }
 
+class Channel {
+  // eventually get channel from cache
+  // if not in cache get from backend
+}
+
+class User implements CacheItem {
+  constructor(uuid: string) {
+
+  }
+}
+
+class Cache<T extends CacheItem> {
+  private client;
+
+  constructor(client: Client) {
+    this.client = client;
+  }
+
+  public items: Map<string, T> = new Map();
+
+  async get(uuid: string) {
+    let item = this.items.get(uuid);
+    if (item) return item;
+    item = await this.client.getUser(uuid);
+    if (item) this.set(item._id, item);
+  }
+
+  set(uuid: string, item: T) {
+    this.items.set(uuid, item);
+  }
+}
+
+class Message {
+  public message;
+  public command?;
+  public args?;
+  public channel: Channel;
+  public author: User;
+
+  constructor(cache: Cache<User>, message: IMessage, command?: string, args?: Array<string>) {
+    this.message = message;
+    this.command = command;
+    this.args = args;
+    this.channel = new Channel();
+    this.author = cache.get(this.message.author_id);
+  }
+}
+
 /**
  * Main Taku Class
  * @author cimok
  */
-class TAKUBOT extends EventEmitter {
+class Client extends EventEmitter {
   protected backendURL: string = "backend.taku.moe";
   protected token: string | undefined;
   protected socket: Socket;
@@ -78,30 +129,37 @@ class TAKUBOT extends EventEmitter {
   protected verbose: Boolean;
   protected prefix: string;
   protected logger;
+  public cache;
 
   constructor(token: string | undefined, verbose: Boolean, prefix: string) {
     super();
     this.logger = new Logger(verbose);
+    this.cache = {
+      users: new Cache<User>(this),
+    };
     this.verbose = verbose;
     this.prefix = prefix;
     this.socket = io(`ws://${this.backendURL}`, {
       auth: { token },
       transports: ["websocket"],
     });
+
     this.socket.on("connect", () => {
       this.logger.socket("Connected", this.backendURL);
       this.emit("connection");
     });
+
     this.socket.on("reconnect_attempt", () => {
       console.log("Reconnecting attempt");
       this.logger.socket("Reconnected", this.backendURL);
     });
+
     this.socket.on("globalMessage", async (message: IMessage) => {
-      const { name, args } = this.parseCommand(message);
-      this.emit("message", message);
-      message.content?.startsWith(this.prefix) &&
-        this.emit("command", { ...message, name, args } as IParsedMessage);
-      // this.gotMessage(message, "globalMessage");
+      this.emit("message", new Message(this.cache.users, message));
+      if (message.content?.startsWith(this.prefix)) {
+        const { name, args } = this.parseCommand(message);
+        this.emit("command", new Message(this.cache.users, message, name, args));
+      }
     });
   }
 
@@ -112,7 +170,7 @@ class TAKUBOT extends EventEmitter {
    * @param body optional
    * @returns json
    */
-  private async request<T>(method: string, endpoint: string, body?: object): Promise<T> {
+  public async request<T>(method: string, endpoint: string, body?: object): Promise<T> {
     const url = `http://${this.backendURL}/${this.version}${endpoint}`;
 
     const headers = {
@@ -142,7 +200,7 @@ class TAKUBOT extends EventEmitter {
    */
   public async getUser(userId: string) {
     try {
-      const { user } = await this.request<{ user: User }>("get", `/user/${userId}`);
+      const { user } = await this.request<{ user: IUser }>("get", `/user/${userId}`);
       return user;
     } catch {
       return;
@@ -172,4 +230,4 @@ class TAKUBOT extends EventEmitter {
   }
 }
 
-export default TAKUBOT;
+export default Client;
