@@ -1,6 +1,3 @@
-console.clear();
-require("dotenv").config();
-
 import chalk from "chalk";
 import io, { Socket } from "socket.io-client";
 // @ts-ignore
