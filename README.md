@@ -48,6 +48,7 @@ Taku.on("command", async (command: IParsedMessage) => {
 
 ### Todo
 
-- [ ] Add better documentation
 - [x] Add EventEmitters
+- [ ] Add better documentation
 - [ ] Add Bot gathering information (get information on the bot)
+- [ ] Add Custom Embeds (MessageEmbed etc)

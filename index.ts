@@ -66,11 +66,36 @@ class Logger {
   }
 }
 
+export class MessageEmbed {
+  private embed: string;
+  public constructor(data?: MessageEmbed){
+    this.embed = "";
+  };
+  public setTitle(title: string) { return this.embed = `${title}\n`; };
+  public setDescription(description: string){ return this.embed.concat(`${description}\n`)};
+  public setFooter(footer: string){};
+  public setImage(image: string){};
+  public setTimestamp(timestamp?: Date | number){};
+  public setURL(url: string){};
+  public setAuthor(name: string, iconURL?: string, url?: string){};
+  public addField(name: string, value: string, inline?: boolean){ return this.embed.concat(`${name}: ${value}\n`)};
+}
+
+export class BotEmbed {
+  public createEmbed(user: User) {
+    let userValues = [];
+    for (const [key, value] of Object.entries(user)) {
+      userValues.push(`${key}: ${value}`);
+    }
+    return `${user.username}\n${userValues.join("\n")}`;
+  }
+}
+
 /**
- * Main Taku Class
+ * Client Class
  * @author cimok
  */
-class TAKUBOT extends EventEmitter {
+export class Client extends EventEmitter {
   protected backendURL: string = "backend.taku.moe";
   protected token: string | undefined;
   protected socket: Socket;
@@ -100,7 +125,6 @@ class TAKUBOT extends EventEmitter {
       const { name, args } = this.parseCommand(message);
       this.emit("message", message);
       message.content?.startsWith(this.prefix) && this.emit("command", { ...message, name, args } as IParsedMessage);
-      // this.gotMessage(message, "globalMessage");
     });
   }
 
@@ -170,5 +194,3 @@ class TAKUBOT extends EventEmitter {
     return { name: args.shift(), args };
   }
 }
-
-export default TAKUBOT;
