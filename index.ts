@@ -25,8 +25,8 @@ export interface User {
   _id: string;
   created_at: number;
   username: string;
-  profileImage?: string;
-  profileBanner?: string;
+  avatar?: string;
+  banner?: string;
 }
 
 export type IParsedMessage = IMessage & ICommand;
