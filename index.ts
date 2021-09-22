@@ -99,8 +99,7 @@ class TAKUBOT extends EventEmitter {
     this.socket.on("globalMessage", async (message: IMessage) => {
       const { name, args } = this.parseCommand(message);
       this.emit("message", message);
-      message.content?.startsWith(this.prefix) &&
-        this.emit("command", { ...message, name, args } as IParsedMessage);
+      message.content?.startsWith(this.prefix) && this.emit("command", { ...message, name, args } as IParsedMessage);
       // this.gotMessage(message, "globalMessage");
     });
   }
