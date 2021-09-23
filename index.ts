@@ -66,28 +66,38 @@ class Logger {
   }
 }
 
-export class MessageEmbed {
-  private embed: string;
-  public constructor(data?: MessageEmbed){
-    this.embed = "";
-  };
-  public setTitle(title: string) { return this.embed = `${title}\n`; };
-  public setDescription(description: string){ return this.embed.concat(`${description}\n`)};
-  public setFooter(footer: string){};
-  public setImage(image: string){};
-  public setTimestamp(timestamp?: Date | number){};
-  public setURL(url: string){};
-  public setAuthor(name: string, iconURL?: string, url?: string){};
-  public addField(name: string, value: string, inline?: boolean){ return this.embed.concat(`${name}: ${value}\n`)};
+interface IField {
+  name: string;
+  content: string;
 }
 
-export class BotEmbed {
-  public createEmbed(user: User) {
-    let userValues = [];
-    for (const [key, value] of Object.entries(user)) {
-      userValues.push(`${key}: ${value}`);
-    }
-    return `${user.username}\n${userValues.join("\n")}`;
+export type HexString = `#${string}`
+
+interface IMessageEmbed {
+  title?: string;
+  description?: string;
+  fields?: IField[];
+  image?: string;
+  color?: HexString;
+}
+
+export class MessageEmbed implements IMessageEmbed {
+  public title?: string;
+  public description?: string;
+  public fields?: IField[];
+  public image?: string;
+  public color?: HexString;
+
+  public constructor(data: IMessageEmbed){
+    this.title = data.title;
+    this.description = data.description;
+    this.fields = data.fields;
+    this.image = data.image;
+    this.color = data.color;
+  };
+
+  public static toJSON(data: MessageEmbed) {
+    return JSON.stringify(data);
   }
 }
 

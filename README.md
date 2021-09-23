@@ -41,9 +41,23 @@ Taku.on("command", async (command: IParsedMessage) => {
   if (command.name == "whois") {
     const user = await Taku.getUser(command.args[0]);
     if (!user) return Taku.send("Not Found");
-    Taku.send(Object.values(user).join("\n"));
+    // {...] do something with user
   }
 })
+```
+
+Example Message Embed:
+
+```ts
+const embed = MessageEmbed.toJSON(new MessageEmbed({
+  title: "Message Embed",
+  description: "This is a Message Embed",
+  image: "https://cdn.discordapp.com/avatars/165087303281147904/a_7dcd0f0c6ca3bced355b43338b795987.gif",
+  fields: [
+    {name: "Email", content: "cimok@taku.moe"},
+    {name: "Created", content: "1631893014502"}
+  ]
+}))
 ```
 
 ### Todo
