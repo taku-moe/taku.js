@@ -14,6 +14,8 @@ export interface IMessage {
   author_id: string;
 }
 
+export type DeviceTypes = "desktop" | "mobile" | "terminal";
+
 export interface ICommand {
   name: string | undefined;
   args: Array<string>;
@@ -104,13 +106,16 @@ export class Client extends EventEmitter {
   protected prefix: string;
   protected logger;
 
-  constructor(token: string | undefined, verbose: Boolean, prefix: string) {
+  constructor(token: string | undefined, device: DeviceTypes = 'terminal', verbose: Boolean, prefix: string) {
     super();
     this.logger = new Logger(verbose);
     this.verbose = verbose;
     this.prefix = prefix;
     this.socket = io(`ws://${this.backendURL}`, {
-      auth: { token },
+      auth: { 
+        token,
+        device
+      },
       transports: ["websocket"],
     });
     this.socket.on("connect", () => {
