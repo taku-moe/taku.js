@@ -119,6 +119,7 @@ export class Client extends EventEmitter {
     this.logger = new Logger(verbose);
     this.verbose = verbose;
     this.prefix = prefix;
+    this.token = token;
     this.socket = io(`ws://${this.backendURL}`, {
       auth: { 
         token,
@@ -177,10 +178,12 @@ export class Client extends EventEmitter {
    * @returns json of the users profile
    */
   public async getUser(userId: string) {
+    if (userId.startsWith("https://taku.moe/user/")) userId = userId.replace("https://taku.moe/user/", "");
     try {
       const { user } = await this.request<{ user: User }>("get", `/user/${userId}`);
       return user;
-    } catch {
+    } catch (err) {
+      console.log(err);
       return;
     }
   }

@@ -1,4 +1,4 @@
-# Taku Bot API
+# Taku.js
 
 <div align="center">
   <br />
@@ -9,7 +9,7 @@
 
 ## About
 
-Taku Bot API is the Official API for creating Taku.moe bots.
+Taku.js is the Official API for connecting to Taku.js backend.
 
 ## Installation
 
