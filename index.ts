@@ -131,6 +131,10 @@ export class Client extends EventEmitter {
       this.logger.socket("Connected", this.backendURL);
       this.emit("connection");
     });
+    this.socket.on("disconnect", () => {
+      this.logger.socket("Disconnected", this.backendURL);
+      this.emit("disconnection");
+    })
     this.socket.on("reconnect_attempt", () => {
       console.log("Reconnecting attempt");
       this.logger.socket("Reconnected", this.backendURL);

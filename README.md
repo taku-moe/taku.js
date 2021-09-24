@@ -66,3 +66,4 @@ const embed = MessageEmbed.toJSON(new MessageEmbed({
 - [ ] Add better documentation
 - [ ] Add Bot gathering information (get information on the bot)
 - [ ] Add Custom Embeds (MessageEmbed etc)
+- [ ] Add Message Deletion, Edit etc
