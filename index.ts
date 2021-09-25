@@ -71,7 +71,7 @@ interface IField {
   content: string;
 }
 
-export type HexString = `#${string}`
+export type HexString = `#${string}`;
 
 interface IMessageEmbed {
   title?: string;
@@ -88,13 +88,13 @@ export class MessageEmbed implements IMessageEmbed {
   public image?: string;
   public color?: HexString;
 
-  public constructor(data: IMessageEmbed){
+  public constructor(data: IMessageEmbed) {
     this.title = data.title;
     this.description = data.description;
     this.fields = data.fields;
     this.image = data.image;
     this.color = data.color;
-  };
+  }
 
   public static toJSON(data: MessageEmbed) {
     return JSON.stringify(data);
@@ -121,9 +121,9 @@ export class Client extends EventEmitter {
     this.prefix = prefix;
     this.token = token;
     this.socket = io(`ws://${this.backendURL}`, {
-      auth: { 
+      auth: {
         token,
-        device: "terminal"
+        device: "terminal",
       },
       transports: ["websocket"],
     });
@@ -134,7 +134,7 @@ export class Client extends EventEmitter {
     this.socket.on("disconnect", () => {
       this.logger.socket("Disconnected", this.backendURL);
       this.emit("disconnection");
-    })
+    });
     this.socket.on("reconnect_attempt", () => {
       console.log("Reconnecting attempt");
       this.logger.socket("Reconnected", this.backendURL);
