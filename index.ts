@@ -20,11 +20,14 @@ export interface ICommand {
 }
 
 export interface User {
-  email: string;
-  password: string;
   _id: string;
   created_at: number;
   username: string;
+  email: string;
+  password: string;
+  last_seen: number;
+  status: string;
+  device: string;
   avatar?: string;
   banner?: string;
 }
@@ -186,6 +189,19 @@ export class Client extends EventEmitter {
     try {
       const { user } = await this.request<{ user: User }>("get", `/user/${userId}`);
       return user;
+    } catch (err) {
+      console.log(err);
+      return;
+    }
+  }
+
+  /**
+   * Gets all users currently on Taku
+   * @returns array of user objects
+   */
+  public async getUsers() {
+    try {
+      return await this.request<User>("get", '/users');
     } catch (err) {
       console.log(err);
       return;
