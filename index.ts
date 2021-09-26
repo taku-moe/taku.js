@@ -201,7 +201,7 @@ export class Client extends EventEmitter {
    */
   public async getUsers() {
     try {
-      return await this.request<User[]>("get", '/users');
+      return await this.request<User[]>("get", "/users");
     } catch (err) {
       console.log(err);
       return;
