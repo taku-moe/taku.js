@@ -12,6 +12,7 @@ export interface IMessage {
   attachments?: string[];
   channel_id: string;
   author_id: string;
+  replying_to?: string;
 }
 
 export interface ICommand {
@@ -123,7 +124,7 @@ export class Client extends EventEmitter {
     this.verbose = verbose;
     this.prefix = prefix;
     this.token = token;
-    this.socket = io(`ws://${this.backendURL}`, {
+    this.socket = io(`wss://${this.backendURL}`, {
       auth: {
         token,
         device: "terminal",
@@ -214,8 +215,11 @@ export class Client extends EventEmitter {
    * @param channel the websocket channel ID (globalMessage)
    * @param message the message to be sent to the chat
    */
-  public send(message: string) {
-    this.socket.emit("globalMessage", message);
+  public send(message: string, messageId?: string | undefined) {
+    this.socket.emit("globalMessage", {
+      content: message,
+      replyingTo: messageId
+    });
   }
 
   /**
