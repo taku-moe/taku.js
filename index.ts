@@ -218,7 +218,7 @@ export class Client extends EventEmitter {
   public send(message: string, messageId?: string | undefined) {
     this.socket.emit("globalMessage", {
       content: message,
-      replyingTo: messageId
+      replyingTo: messageId,
     });
   }
 
