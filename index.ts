@@ -3,6 +3,7 @@ import io, { Socket } from "socket.io-client";
 // @ts-ignore
 import * as fetch from "node-fetch";
 import EventEmitter from "eventemitter3";
+import FormData from "form-data";
 export const PORT = process.env.PORT || 8081;
 
 export interface IMessage {
@@ -31,6 +32,8 @@ export interface User {
   device: string;
   avatar?: string;
   banner?: string;
+  saved_emojis: [string];
+  guild_list: [string];
 }
 
 export type IParsedMessage = IMessage & ICommand;
@@ -120,13 +123,14 @@ export class Client extends EventEmitter {
   protected prefix: string;
   protected logger;
 
-  constructor(token: string | undefined, verbose: Boolean, prefix: string) {
+  constructor(token: string | undefined, uuid: string, verbose: Boolean, prefix: string) {
     super();
     this.logger = new Logger(verbose);
     this.verbose = verbose;
     this.prefix = prefix;
     this.token = token;
-    this.uuid = "9af3e207-f075-469d-8f2d-f1821c27e3cb";
+    this.uuid = uuid;
+    this.connectToGuilds();
     this.socket = io(`wss://${this.backendURL}`, {
       auth: {
         uuid: this.uuid,
@@ -169,22 +173,41 @@ export class Client extends EventEmitter {
         Authorization: this.token || "unset",
       };
     }
-
+    
     const options = {
       method: method.toUpperCase(),
       headers,
       body: body instanceof FormData ? body : JSON.stringify(body),
     };
-
+    
     const response = await fetch(url, options);
     const data = await response.json();
-
+    
     return data;
   }
-
+  
   private async backendRequest<T>(method: string, endpoint: string, body?: object): Promise<T> {
-    const url = `${this.backendURL}/v1${endpoint}`;
+    const url = `https://${this.backendURL}/v1${endpoint}`;
     return this.request(method, url, body);
+  }
+
+  private async connectToGuilds() {
+    const guilds = await this.getGuilds();
+    if (!guilds) return
+    for (let i = 0; i < guilds.length; i++) {
+      const guild = guilds[i];
+    }
+  }
+  
+  /**
+   * @author cimok
+   * Gets the uuids of the guilds that the account is currently in
+   * @returns array of guild uuids
+   */
+  public async getGuilds() {
+    const user = await this.getUser(this.uuid);
+    if (!user) return;
+    return user.guild_list;
   }
 
   private async connectToGuildSocket(hostname: string) {
