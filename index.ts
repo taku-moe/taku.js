@@ -111,7 +111,9 @@ export class MessageEmbed implements IMessageEmbed {
  */
 export class Client extends EventEmitter {
   protected backendURL: string = "backend.taku.moe";
+  protected guildURL: string = "taku.cimok.co.uk";
   protected token: string | undefined;
+  protected uuid: string;
   protected socket: Socket;
   protected version: string = "v1";
   protected verbose: Boolean;
@@ -124,8 +126,10 @@ export class Client extends EventEmitter {
     this.verbose = verbose;
     this.prefix = prefix;
     this.token = token;
+    this.uuid = "9af3e207-f075-469d-8f2d-f1821c27e3cb";
     this.socket = io(`wss://${this.backendURL}`, {
       auth: {
+        uuid: this.uuid,
         token,
         device: "terminal",
       },
@@ -143,40 +147,58 @@ export class Client extends EventEmitter {
       console.log("Reconnecting attempt");
       this.logger.socket("Reconnected", this.backendURL);
     });
-    this.socket.on("globalMessage", async (message: IMessage) => {
-      const { name, args } = this.parseCommand(message);
-      this.emit("message", message);
-      message.content?.startsWith(this.prefix) && this.emit("command", { ...message, name, args } as IParsedMessage);
-    });
   }
 
   /**
+   * Makes an HTTP request to the backend
+   * @param method The HTTP verb to cast
+   * @param endpoint The backend endpoint route
+   * @param body The body to send
    * @author Geoxor
-   * @param method get | post etc
-   * @param endpoint user etc
-   * @param body optional
-   * @returns json
    */
-  private async request<T>(method: string, endpoint: string, body?: object): Promise<T> {
-    const url = `http://${this.backendURL}/${this.version}${endpoint}`;
-
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: this.token || "unset",
-    };
+  private async request<T>(method: string, url: string, body?: object): Promise<T> {
+    // Very stupid, good job fetch API
+    if (body instanceof FormData) {
+      var headers = {
+        Authorization: this.token || "unset",
+      };
+    } else {
+      // @ts-ignore
+      var headers = {
+        "Content-Type": body instanceof FormData ? undefined : "application/json",
+        Authorization: this.token || "unset",
+      };
+    }
 
     const options = {
       method: method.toUpperCase(),
       headers,
-      body: JSON.stringify(body),
+      body: body instanceof FormData ? body : JSON.stringify(body),
     };
-
-    this.logger.request(method, `/${this.version}${endpoint}`);
 
     const response = await fetch(url, options);
     const data = await response.json();
 
     return data;
+  }
+
+  private async backendRequest<T>(method: string, endpoint: string, body?: object): Promise<T> {
+    const url = `${this.backendURL}/v1${endpoint}`;
+    return this.request(method, url, body);
+  }
+
+  private async connectToGuildSocket(hostname: string) {
+    const { token } = await this.request<{ guild_id: string; token: string }>("post", `${this.guildURL}/login`, {
+      uuid: this.uuid,
+    });
+
+    return io(hostname.replace("https://", "wss://").replace("http://", "ws://"), {
+      auth: {
+        uuid: this.uuid,
+        token: this.token,
+      },
+      transports: ["websocket"],
+    });
   }
 
   /**
@@ -188,7 +210,7 @@ export class Client extends EventEmitter {
   public async getUser(userId: string) {
     if (userId.startsWith("https://taku.moe/user/")) userId = userId.replace("https://taku.moe/user/", "");
     try {
-      const { user } = await this.request<{ user: User }>("get", `/user/${userId}`);
+      const { user } = await this.backendRequest<{ user: User }>("get", `/user/${userId}`);
       return user;
     } catch (err) {
       console.log(err);
@@ -202,7 +224,7 @@ export class Client extends EventEmitter {
    */
   public async getUsers() {
     try {
-      return await this.request<User[]>("get", "/users");
+      return await this.backendRequest<User[]>("get", "/users");
     } catch (err) {
       console.log(err);
       return;
