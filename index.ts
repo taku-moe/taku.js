@@ -73,9 +73,18 @@ class Logger {
   }
 }
 
+
+
 interface IField {
   name: string;
   content: string;
+}
+
+export interface BackendGuildDatabaseEntry {
+  _id: string;
+  owner_id: string;
+  name: string;
+  hostname: string;
 }
 
 export type HexString = `#${string}`;
@@ -122,6 +131,7 @@ export class Client extends EventEmitter {
   protected verbose: Boolean;
   protected prefix: string;
   protected logger;
+  protected sockets: Map<string, Socket> = new Map;
 
   constructor(token: string | undefined, uuid: string, verbose: Boolean, prefix: string) {
     super();
@@ -139,18 +149,7 @@ export class Client extends EventEmitter {
       },
       transports: ["websocket"],
     });
-    this.socket.on("connect", () => {
-      this.logger.socket("Connected", this.backendURL);
-      this.emit("connection");
-    });
-    this.socket.on("disconnect", () => {
-      this.logger.socket("Disconnected", this.backendURL);
-      this.emit("disconnection");
-    });
-    this.socket.on("reconnect_attempt", () => {
-      console.log("Reconnecting attempt");
-      this.logger.socket("Reconnected", this.backendURL);
-    });
+    
   }
 
   /**
@@ -173,19 +172,19 @@ export class Client extends EventEmitter {
         Authorization: this.token || "unset",
       };
     }
-    
+
     const options = {
       method: method.toUpperCase(),
       headers,
       body: body instanceof FormData ? body : JSON.stringify(body),
     };
-    
+
     const response = await fetch(url, options);
     const data = await response.json();
-    
+
     return data;
   }
-  
+
   private async backendRequest<T>(method: string, endpoint: string, body?: object): Promise<T> {
     const url = `https://${this.backendURL}/v1${endpoint}`;
     return this.request(method, url, body);
@@ -193,12 +192,51 @@ export class Client extends EventEmitter {
 
   private async connectToGuilds() {
     const guilds = await this.getGuilds();
-    if (!guilds) return
+    if (!guilds) return;
     for (let i = 0; i < guilds.length; i++) {
-      const guild = guilds[i];
+      const guild = await this.getGuild(guilds[i]);
+      try {
+        this.sockets.set(guild._id, await this.connectToGuildSocket(guild.hostname));
+      } catch (err) {
+        console.log("Cannot connect");
+      }
+    }
+    this.addListeners();
+  }
+
+  private addListeners() {
+    const sockets = Array.from(this.sockets.values());
+    const guildIDs = Array.from(this.sockets.keys());
+    for (let i = 0; i < sockets.length; i++) {
+      const guildId = guildIDs[i];
+      const socket = sockets[i];
+      socket.on("connect", () => {
+        this.logger.socket("Connected", socket.io.socket.name);
+        this.emit("connection", guildId);
+      });
+      socket.on("disconnect", () => {
+        this.logger.socket("Disconnected", socket.io.socket.name);
+        this.emit("disconnection", guildId);
+      });
+      socket.on("reconnect_attempt", () => {
+        this.logger.socket("Reconnecting attempt", socket.io.socket.name);
+        this.emit("reconnecting", guildId);
+      });
+      socket.on("message", (message) => {
+        this.emit("message", {guildId, ...message})
+      });
     }
   }
-  
+
+  /**
+   * Gets a guild's data from the backend (minimal)
+   * @param uuid the guild id to get
+   * @returns
+   */
+  public async getGuild(uuid: string) {
+    return this.backendRequest<BackendGuildDatabaseEntry>("get", `/guild/${uuid}`).catch();
+  }
+
   /**
    * @author cimok
    * Gets the uuids of the guilds that the account is currently in
@@ -211,14 +249,14 @@ export class Client extends EventEmitter {
   }
 
   private async connectToGuildSocket(hostname: string) {
-    const { token } = await this.request<{ guild_id: string; token: string }>("post", `${this.guildURL}/login`, {
+    const { token } = await this.request<{ guild_id: string; token: string }>("post", `${hostname}/login`, {
       uuid: this.uuid,
     });
 
     return io(hostname.replace("https://", "wss://").replace("http://", "ws://"), {
       auth: {
         uuid: this.uuid,
-        token: this.token,
+        token,
       },
       transports: ["websocket"],
     });
