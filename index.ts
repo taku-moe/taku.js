@@ -4,40 +4,8 @@ import io, { Socket } from "socket.io-client";
 import * as fetch from "node-fetch";
 import EventEmitter from "eventemitter3";
 import FormData from "form-data";
+import { BackendGuildDatabaseEntry, HexString, IField, IMessage, IMessageEmbed, IParsedMessage, User } from "./types";
 export const PORT = process.env.PORT || 8081;
-
-export interface IMessage {
-  guild_id: string;
-  _id: string;
-  created_at: number;
-  content?: string;
-  attachments?: string[];
-  channel_id: string;
-  author_id: string;
-  replying_to?: string;
-}
-
-export interface ICommand {
-  name: string | undefined;
-  args: Array<string>;
-}
-
-export interface User {
-  _id: string;
-  created_at: number;
-  username: string;
-  email: string;
-  password: string;
-  last_seen: number;
-  status: string;
-  device: string;
-  avatar?: string;
-  banner?: string;
-  saved_emojis: [string];
-  guild_list: [string];
-}
-
-export type IParsedMessage = IMessage & ICommand;
 
 /**
  * Logger Class
@@ -74,28 +42,6 @@ class Logger {
   }
 }
 
-interface IField {
-  name: string;
-  content: string;
-}
-
-export interface BackendGuildDatabaseEntry {
-  _id: string;
-  owner_id: string;
-  name: string;
-  hostname: string;
-}
-
-export type HexString = `#${string}`;
-
-interface IMessageEmbed {
-  title?: string;
-  description?: string;
-  fields?: IField[];
-  image?: string;
-  color?: HexString;
-}
-
 export class MessageEmbed implements IMessageEmbed {
   public title?: string;
   public description?: string;
@@ -122,7 +68,6 @@ export class MessageEmbed implements IMessageEmbed {
  */
 export class Client extends EventEmitter {
   protected backendURL: string = "backend.taku.moe";
-  protected guildURL: string = "taku.cimok.co.uk";
   protected token: string | undefined;
   protected uuid: string;
   protected socket: Socket;
@@ -148,7 +93,6 @@ export class Client extends EventEmitter {
       },
       transports: ["websocket"],
     });
-    
   }
 
   /**
