@@ -7,6 +7,7 @@ import FormData from "form-data";
 export const PORT = process.env.PORT || 8081;
 
 export interface IMessage {
+  guild_id: string;
   _id: string;
   created_at: number;
   content?: string;
@@ -72,8 +73,6 @@ class Logger {
     }
   }
 }
-
-
 
 interface IField {
   name: string;
@@ -208,22 +207,22 @@ export class Client extends EventEmitter {
     const sockets = Array.from(this.sockets.values());
     const guildIDs = Array.from(this.sockets.keys());
     for (let i = 0; i < sockets.length; i++) {
-      const guildId = guildIDs[i];
+      const guild_id = guildIDs[i];
       const socket = sockets[i];
       socket.on("connect", () => {
         this.logger.socket("Connected", socket.io.socket.name);
-        this.emit("connection", guildId);
+        this.emit("connection", guild_id);
       });
       socket.on("disconnect", () => {
         this.logger.socket("Disconnected", socket.io.socket.name);
-        this.emit("disconnection", guildId);
+        this.emit("disconnection", guild_id);
       });
       socket.on("reconnect_attempt", () => {
         this.logger.socket("Reconnecting attempt", socket.io.socket.name);
-        this.emit("reconnecting", guildId);
+        this.emit("reconnecting", guild_id);
       });
       socket.on("message", (message) => {
-        this.emit("message", {guildId, ...message})
+        this.emit("message", {guild_id, ...message})
       });
     }
   }
@@ -269,8 +268,8 @@ export class Client extends EventEmitter {
    * @returns json of the users profile
    */
   public async getUser(userId: string) {
-    if (userId.startsWith("https://taku.moe/user/")) userId = userId.replace("https://taku.moe/user/", "");
     try {
+      if (userId.startsWith("https://taku.moe/user/")) userId = userId.replace("https://taku.moe/user/", "");
       const { user } = await this.backendRequest<{ user: User }>("get", `/user/${userId}`);
       return user;
     } catch (err) {
@@ -295,13 +294,13 @@ export class Client extends EventEmitter {
   /**
    * Send a message to the chat.
    * @author cimok
-   * @param channel the websocket channel ID (globalMessage)
    * @param message the message to be sent to the chat
    */
-  public send(message: string, messageId?: string | undefined) {
-    this.socket.emit("globalMessage", {
+  public send(guildID: string, channelID: string, message: string, messageId?: string | undefined) {
+    this.sockets.get(guildID)?.emit("message", {
       content: message,
-      replyingTo: messageId,
+      channel_id: channelID,
+      replying_to: messageId,
     });
   }
 
@@ -311,9 +310,9 @@ export class Client extends EventEmitter {
    * @param message The message to parse
    * @returns the command and args
    */
-  public parseCommand(message: IMessage): ICommand {
+  public parseCommand(message: IMessage): IParsedMessage {
     let args = message.content?.replace(this.prefix, "").split(" ");
     args ??= [];
-    return { name: args.shift(), args };
+    return { name: args.shift(), args, ...message };
   }
 }
