@@ -21,7 +21,7 @@ Example Bot:
 import Taku from 'taku.js';
 const Taku = new TAKU(process.env.BOT_TOKEN, true, "!");
 
-Taku.on("message", async (message: IMessage) => {
+Taku.on("message", async (message: Message) => {
   // {...} do something with message
 })
 
