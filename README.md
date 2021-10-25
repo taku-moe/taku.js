@@ -21,28 +21,8 @@ Example Bot:
 import Taku from 'taku.js';
 const Taku = new TAKU(process.env.BOT_TOKEN, true, "!");
 
-Taku.on("message", async (message: Message) => {
+Taku.on("message", async (message) => {
   // {...} do something with message
-})
-
-Taku.on("command", async (command: IParsedMessage) => {
-  // {...} do something with command
-})
-```
-
-Example Whois Command:
-
-```ts
-import Taku from 'taku.js';
-const Taku = new TAKU(process.env.BOT_TOKEN, true, "!");
-
-Taku.on("command", async (command: IParsedMessage) => {
-  if (command.author_id == "9af3e207-f075-469d-8f2d-f1821c27e3cb") return;
-  if (command.name == "whois") {
-    const user = await Taku.getUser(command.args[0]);
-    if (!user) return Taku.send("Not Found");
-    // {...] do something with user
-  }
 })
 ```
 
