@@ -7,49 +7,40 @@ import FormData from "form-data";
 import { BackendGuild, HexColor, Message, User } from "@taku.moe/types";
 export const PORT = process.env.PORT || 8081;
 
+interface IMessageEmbed {
+  title?: string, 
+  description?: string, 
+  fields?: any[], 
+  image?: string, 
+  color?: HexColor;
+}
+
 /**
  * Logger Class
  * @author cimok
  */
 class Logger {
-  protected verbose;
-  constructor(verbose: Boolean) {
+  protected verbose: boolean;
+  public constructor(verbose: boolean) {
     this.verbose = verbose;
   }
 
-  socket(type: string, url: string) {
-    if (this.verbose) {
-      console.log(`${chalk.green("[SOCKET]")} ${url}: ${type}`);
-    }
-  }
+  private assure = (string: string) => this.verbose && console.log(string);
 
-  log(log: string) {
-    if (this.verbose) {
-      console.log(`${chalk.blue("[LOG]")} ${log}`);
-    }
-  }
-
-  message(message: string) {
-    if (this.verbose) {
-      console.log(`${chalk.blue("[MESSAGE]")} ${message}`);
-    }
-  }
-
-  request(method: string, url: string) {
-    if (this.verbose) {
-      console.log(`${chalk.red("[REQUEST]")} ${chalk.cyan(method.toUpperCase())} ${url}`);
-    }
-  }
+  public socket =  (type: string, url: string) =>   this.assure(`${chalk.green("[SOCKET]")} ${url}: ${type}`);
+  public log =     (log: string) =>                 this.assure(`${chalk.blue("[LOG]")} ${log}`);
+  public message = (message: string) =>             this.assure(`${chalk.blue("[MESSAGE]")} ${message}`);
+  public request = (method: string, url: string) => this.assure(`${chalk.red("[REQUEST]")} ${chalk.cyan(method.toUpperCase())} ${url}`);
 }
 
-export class MessageEmbed {
+export class MessageEmbed implements IMessageEmbed {
   public title?: string;
   public description?: string;
   public fields?: any[];
   public image?: string;
   public color?: HexColor;
   
-  public constructor(data: {title?: string, description?: string, fields?: any[], image?: string, color?: HexColor;}) {
+  public constructor(data: IMessageEmbed) {
     this.title = data.title;
     this.description = data.description;
     this.fields = data.fields;
@@ -57,7 +48,7 @@ export class MessageEmbed {
     this.color = data.color;
   }
 
-  public static toJSON(data: {title?: string, description?: string, fields?: any[], image?: string, color?: HexColor;}) {
+  public static toJSON(data: IMessageEmbed) {
     return JSON.stringify(data);
   }
 }
@@ -72,12 +63,12 @@ export class Client extends EventEmitter {
   protected uuid: string;
   protected socket: Socket;
   protected version: string = "v1";
-  protected verbose: Boolean;
+  protected verbose: boolean;
   protected prefix: string;
   protected logger;
   protected sockets: Map<string, Socket> = new Map;
 
-  constructor(token: string | undefined, uuid: string, verbose: Boolean, prefix: string) {
+  constructor(token: string | undefined, uuid: string, verbose: boolean, prefix: string) {
     super();
     this.logger = new Logger(verbose);
     this.verbose = verbose;
@@ -165,9 +156,7 @@ export class Client extends EventEmitter {
         this.logger.socket("Reconnecting attempt", socket.io.socket.name);
         this.emit("reconnecting", guild_id);
       });
-      socket.on("message", (message: Message) => {
-        this.emit("message", {guild_id, ...message})
-      });
+      socket.on("message", (message: Message) => this.emit("message", {guild_id, ...message}));
     }
   }
 
