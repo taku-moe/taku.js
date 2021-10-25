@@ -255,7 +255,7 @@ export class Client extends EventEmitter {
    * @returns the command and args
    * @deprecated
    */
-  public parseCommand(message: Message): IParsedMessage {
+  public parseCommand(message: Message) {
     let args = message.content?.replace(this.prefix, "").split(" ");
     args ??= [];
     return { name: args.shift(), args, ...message };
