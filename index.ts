@@ -4,7 +4,7 @@ import io, { Socket } from "socket.io-client";
 import * as fetch from "node-fetch";
 import EventEmitter from "eventemitter3";
 import FormData from "form-data";
-import { BackendGuildDatabaseEntry, HexString, IField, IMessage, IMessageEmbed, IParsedMessage, User } from "./types";
+import { BackendGuild, HexColor, Message, User } from "@taku.moe/types";
 export const PORT = process.env.PORT || 8081;
 
 /**
@@ -42,14 +42,14 @@ class Logger {
   }
 }
 
-export class MessageEmbed implements IMessageEmbed {
+export class MessageEmbed {
   public title?: string;
   public description?: string;
-  public fields?: IField[];
+  public fields?: any[];
   public image?: string;
-  public color?: HexString;
-
-  public constructor(data: IMessageEmbed) {
+  public color?: HexColor;
+  
+  public constructor(data: {title?: string, description?: string, fields?: any[], image?: string, color?: HexColor;}) {
     this.title = data.title;
     this.description = data.description;
     this.fields = data.fields;
@@ -57,7 +57,7 @@ export class MessageEmbed implements IMessageEmbed {
     this.color = data.color;
   }
 
-  public static toJSON(data: MessageEmbed) {
+  public static toJSON(data: {title?: string, description?: string, fields?: any[], image?: string, color?: HexColor;}) {
     return JSON.stringify(data);
   }
 }
@@ -165,7 +165,7 @@ export class Client extends EventEmitter {
         this.logger.socket("Reconnecting attempt", socket.io.socket.name);
         this.emit("reconnecting", guild_id);
       });
-      socket.on("message", (message) => {
+      socket.on("message", (message: Message) => {
         this.emit("message", {guild_id, ...message})
       });
     }
@@ -177,7 +177,7 @@ export class Client extends EventEmitter {
    * @returns
    */
   public async getGuild(uuid: string) {
-    return this.backendRequest<BackendGuildDatabaseEntry>("get", `/guild/${uuid}`).catch();
+    return this.backendRequest<BackendGuild>("get", `/guild/${uuid}`).catch();
   }
 
   /**
@@ -253,8 +253,9 @@ export class Client extends EventEmitter {
    * @author cimok
    * @param message The message to parse
    * @returns the command and args
+   * @deprecated
    */
-  public parseCommand(message: IMessage): IParsedMessage {
+  public parseCommand(message: Message): IParsedMessage {
     let args = message.content?.replace(this.prefix, "").split(" ");
     args ??= [];
     return { name: args.shift(), args, ...message };
